@@ -2,9 +2,71 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Mob Crowd Game — coming soon</title>
-<style>html,body{margin:0;height:100%;display:flex;align-items:center;justify-content:center;background:#111;color:#eee;font-family:system-ui,sans-serif}</style>
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#140c18">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="emberline-build" content="emberline-1">
+<title>Emberline</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23140c18'/%3E%3Ccircle cx='16' cy='18' r='6' fill='%23ff9a3c'/%3E%3Ccircle cx='16' cy='17' r='2.2' fill='%23fff1cf'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="./style.css">
 </head>
-<body><h1>Coming soon</h1><!-- pages deploy check --></body>
+<body>
+<div id="safe-probe" aria-hidden="true"></div>
+<canvas id="view" width="390" height="844"></canvas>
+<div id="hud" hidden>
+  <div class="hud-row">
+    <div class="stage-block">
+      <div id="stage-kicker">Stage 1</div>
+      <div id="stage-name">Kindling Yard</div>
+    </div>
+    <div class="hp-block">
+      <div class="hp-label"><span>Crown</span> <b id="enemy-hp">0</b></div>
+      <div class="bar" aria-hidden="true"><div id="enemy-bar"></div></div>
+      <div class="hp-label hearth"><span>Hearth</span> <b id="player-hp">0</b></div>
+    </div>
+  </div>
+</div>
+<div id="overlay">
+  <section class="card" data-screen="title">
+    <p class="kicker">Forge defense</p>
+    <h1>Emberline</h1>
+    <p class="lede">Drag the cannon. Feed the gates. Break the crown.</p>
+    <ul class="howto">
+      <li>Press and drag sideways. The cannon fires a steady line of embers.</li>
+      <li>Gates change the count: <b>x2</b> and <b>x3</b> multiply, <b>+10</b> adds, <b>−5</b> cuts the line.</li>
+      <li>Embers trade one for one with raiders. The rest strike the crown. If raiders reach the hearth, you fall.</li>
+    </ul>
+    <div class="actions">
+      <button type="button" class="primary" data-action="start" autofocus>Start</button>
+    </div>
+  </section>
+  <section class="card" data-screen="win" hidden>
+    <p class="kicker" id="win-kicker">Stage clear</p>
+    <h2>Crown cracked</h2>
+    <p id="win-copy">The span goes quiet.</p>
+    <div class="actions">
+      <button type="button" class="primary" data-action="next">Next</button>
+      <button type="button" class="ghost" data-action="retry">Retry</button>
+    </div>
+  </section>
+  <section class="card" data-screen="lose" hidden>
+    <p class="kicker">Hearth lost</p>
+    <h2>Line broken</h2>
+    <p>Raiders reached the forge.</p>
+    <div class="actions">
+      <button type="button" class="primary" data-action="retry">Retry</button>
+    </div>
+  </section>
+  <section class="card" data-screen="clear" hidden>
+    <p class="kicker">Emberline</p>
+    <h2>All clear</h2>
+    <p>Three crowns cold. The column held from the yard to the kiln.</p>
+    <div class="actions">
+      <button type="button" class="primary" data-action="loop">Next</button>
+    </div>
+  </section>
+</div>
+<script src="./game.js"></script>
+</body>
 </html>
