@@ -1,0 +1,391 @@
+{
+  "url": "https://souljazzfunk.github.io/mob-crowd-game/",
+  "only": "full",
+  "viewport": "1280x800",
+  "browser": "headless Chromium",
+  "input": "page.mouse pointer drag; button clicks only for Start, Retry, and Next",
+  "clocks": "seconds = elapsedMilliseconds / 1000",
+  "enemyCountMethod": "one #F4FFFD highlight core per raider, below the crown and above the cannon",
+  "frontY": "lowest core centroid in CSS pixels; larger y is toward the player",
+  "checks": {
+    "horde": {
+      "pass": true,
+      "t1": {
+        "secondsAfterStart": 1.005,
+        "enemyCount": 72,
+        "frontY": 380,
+        "frontEdgeY": 402,
+        "cyanSamples": 13305,
+        "source": "screenshot",
+        "canvasEnemyCount": 72,
+        "canvasFrontY": 378.316,
+        "png": {
+          "width": 1280,
+          "height": 800,
+          "enemyCount": 72,
+          "frontY": 380,
+          "frontEdgeY": 402,
+          "cyanPx": 13305
+        },
+        "observeMs": 4,
+        "shot": "t1s.png",
+        "odd": [
+          [
+            0,
+            195,
+            176
+          ],
+          [
+            0,
+            217,
+            196
+          ],
+          [
+            0,
+            206,
+            186
+          ],
+          [
+            0,
+            216,
+            195
+          ],
+          [
+            0,
+            203,
+            183
+          ],
+          [
+            0,
+            198,
+            179
+          ]
+        ]
+      },
+      "t5": {
+        "secondsAfterStart": 5.013,
+        "enemyCount": 124,
+        "frontY": 559,
+        "frontEdgeY": 580,
+        "cyanSamples": 22696,
+        "source": "screenshot",
+        "canvasEnemyCount": 124,
+        "canvasFrontY": 557,
+        "png": {
+          "width": 1280,
+          "height": 800,
+          "enemyCount": 124,
+          "frontY": 559,
+          "frontEdgeY": 580,
+          "cyanPx": 22696
+        },
+        "observeMs": 9,
+        "shot": "t5s.png",
+        "odd": [
+          [
+            0,
+            202,
+            182
+          ],
+          [
+            0,
+            191,
+            172
+          ],
+          [
+            0,
+            211,
+            191
+          ],
+          [
+            0,
+            214,
+            192
+          ],
+          [
+            0,
+            203,
+            183
+          ],
+          [
+            0,
+            211,
+            191
+          ]
+        ]
+      },
+      "frontDeltaY": 179,
+      "note": "Positive frontDeltaY means the front rank moved down, toward the player."
+    },
+    "fps": {
+      "pass": true,
+      "environment": "headless Chromium on a cloud VM",
+      "method": "requestAnimationFrame timestamps stored on window.__fpsRead; the observer does not write game state",
+      "window": "after the t=1s screenshot through the read just before the t=5s screenshot, dropping the first 40ms after the window was armed",
+      "windowStartSeconds": 1.144,
+      "windowEndSeconds": 5.013,
+      "average": 60,
+      "minimum": 59.52,
+      "frames": 230,
+      "spanMs": 3816.5,
+      "worstFrameMs": 16.8,
+      "minimumMeans": "1000 / longest gap between consecutive rAF timestamps in the window"
+    },
+    "idleLose": {
+      "pass": true,
+      "seconds": 14.086,
+      "milliseconds": 14086,
+      "formula": "(loseVisibleWallClock - stageStartWallClock) / 1000",
+      "phase": "lose",
+      "heading": "Line broken",
+      "copy": "Raiders reached the forge.",
+      "hearth": "0",
+      "crown": "1530",
+      "trace": [
+        {
+          "seconds": 5.145,
+          "phase": "play",
+          "hearth": "48",
+          "crown": "1652"
+        },
+        {
+          "seconds": 5.548,
+          "phase": "play",
+          "hearth": "48",
+          "crown": "1645"
+        },
+        {
+          "seconds": 5.966,
+          "phase": "play",
+          "hearth": "48",
+          "crown": "1639"
+        },
+        {
+          "seconds": 6.369,
+          "phase": "play",
+          "hearth": "48",
+          "crown": "1633"
+        },
+        {
+          "seconds": 6.778,
+          "phase": "play",
+          "hearth": "48",
+          "crown": "1627"
+        },
+        {
+          "seconds": 7.182,
+          "phase": "play",
+          "hearth": "48",
+          "crown": "1622"
+        },
+        {
+          "seconds": 7.585,
+          "phase": "play",
+          "hearth": "48",
+          "crown": "1616"
+        },
+        {
+          "seconds": 7.995,
+          "phase": "play",
+          "hearth": "48",
+          "crown": "1610"
+        },
+        {
+          "seconds": 8.398,
+          "phase": "play",
+          "hearth": "48",
+          "crown": "1605"
+        },
+        {
+          "seconds": 8.801,
+          "phase": "play",
+          "hearth": "48",
+          "crown": "1598"
+        },
+        {
+          "seconds": 9.21,
+          "phase": "play",
+          "hearth": "48",
+          "crown": "1593"
+        },
+        {
+          "seconds": 9.614,
+          "phase": "play",
+          "hearth": "42",
+          "crown": "1588"
+        },
+        {
+          "seconds": 10.018,
+          "phase": "play",
+          "hearth": "42",
+          "crown": "1582"
+        },
+        {
+          "seconds": 10.427,
+          "phase": "play",
+          "hearth": "36",
+          "crown": "1576"
+        },
+        {
+          "seconds": 10.83,
+          "phase": "play",
+          "hearth": "30",
+          "crown": "1570"
+        },
+        {
+          "seconds": 11.234,
+          "phase": "play",
+          "hearth": "30",
+          "crown": "1564"
+        },
+        {
+          "seconds": 11.644,
+          "phase": "play",
+          "hearth": "24",
+          "crown": "1559"
+        },
+        {
+          "seconds": 12.05,
+          "phase": "play",
+          "hearth": "18",
+          "crown": "1553"
+        },
+        {
+          "seconds": 12.46,
+          "phase": "play",
+          "hearth": "18",
+          "crown": "1548"
+        },
+        {
+          "seconds": 12.863,
+          "phase": "play",
+          "hearth": "12",
+          "crown": "1542"
+        },
+        {
+          "seconds": 13.267,
+          "phase": "play",
+          "hearth": "6",
+          "crown": "1537"
+        },
+        {
+          "seconds": 13.678,
+          "phase": "play",
+          "hearth": "6",
+          "crown": "1531"
+        },
+        {
+          "seconds": 14.086,
+          "phase": "lose",
+          "hearth": "0",
+          "crown": "1530"
+        }
+      ],
+      "shot": "lose.png",
+      "input": "Start click, then no pointer and no keyboard until the lose screen"
+    },
+    "loseRetry": {
+      "pass": true,
+      "phase": "play",
+      "stage": "1",
+      "kicker": "Stage 1",
+      "name": "Kindling Yard",
+      "crown": "1700",
+      "hearth": "48"
+    },
+    "gate": {
+      "pass": true,
+      "before": 3,
+      "after": 16,
+      "delta": 13,
+      "secondsBefore": 0.303,
+      "secondsAfter": 0.502,
+      "beforeScore": 0.683,
+      "afterScore": 0.824,
+      "addPxBefore": 1157,
+      "addPxAfter": 24,
+      "crownBefore": "1700",
+      "crownAfter": "1700"
+    },
+    "collision": {
+      "pass": true,
+      "secondsBefore": 7.651,
+      "secondsAfter": 8.25,
+      "dt": 0.599,
+      "meetFriendBefore": 14,
+      "meetFriendAfter": 12,
+      "meetEnemyBefore": 7,
+      "meetEnemyAfter": 5,
+      "meetFriendPxBefore": 217,
+      "meetFriendPxAfter": 187,
+      "hearth": "48",
+      "crownBefore": "1573",
+      "crownAfter": "1563",
+      "shot": "collision.png"
+    },
+    "clear": {
+      "pass": true,
+      "seconds": 95.18,
+      "milliseconds": 95180,
+      "formula": "(winVisibleWallClock - stageStartWallClock) / 1000",
+      "phase": "win",
+      "heading": "Crown cracked",
+      "kicker": "Stage 1 clear",
+      "copy": "Kindling Yard goes quiet.",
+      "input": "pointer drag only after the lose-screen Retry restarted stage 1",
+      "shot": "win.png",
+      "startHud": {
+        "crown": "1700",
+        "hearth": "48",
+        "name": "Kindling Yard",
+        "stage": "1"
+      }
+    },
+    "winRetry": {
+      "pass": true,
+      "phase": "play",
+      "stage": "1",
+      "kicker": "Stage 1",
+      "name": "Kindling Yard",
+      "crown": "1700",
+      "hearth": "48"
+    },
+    "clear2": {
+      "pass": true,
+      "seconds": 98.348,
+      "phase": "win",
+      "heading": "Crown cracked",
+      "kicker": "Stage 1 clear"
+    },
+    "next": {
+      "pass": true,
+      "phase": "play",
+      "stage": "2",
+      "kicker": "Stage 2",
+      "name": "Cinder Span",
+      "crown": "3200",
+      "hearth": "30"
+    },
+    "console": {
+      "pass": true,
+      "consoleErrors": [],
+      "pageErrors": []
+    }
+  },
+  "opened": {
+    "phase": "title",
+    "stage": "1",
+    "kicker": "Stage 1",
+    "name": "Kindling Yard",
+    "crown": "0",
+    "hearth": "0",
+    "winKicker": "Stage clear",
+    "winCopy": "The span goes quiet.",
+    "winH2": "Crown cracked",
+    "loseH2": "Line broken",
+    "loseCopy": "Raiders reached the forge.",
+    "hook": "undefined",
+    "href": "https://souljazzfunk.github.io/mob-crowd-game/",
+    "build": "emberline-3"
+  }
+}
