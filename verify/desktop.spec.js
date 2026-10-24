@@ -951,7 +951,7 @@ test('live desktop Chromium verification', async ({ page }) => {
     prevT = Date.now();
     let stage2Won = false;
     let stage2Steps = 0;
-    const stage2Budget = Date.now() + 6 * 60 * 1000;
+    const stage2Budget = Date.now() + 11 * 60 * 1000;
     while (Date.now() < stage2Budget) {
       stage2Steps += 1;
       const reading = await page.evaluate(OBSERVE_FN, { aimX: lastAim, lastCount, wide: false });

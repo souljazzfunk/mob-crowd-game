@@ -1,0 +1,253 @@
+{
+  "url": "https://souljazzfunk.github.io/mob-crowd-game/",
+  "viewport": {
+    "width": 1280,
+    "height": 800
+  },
+  "items": {
+    "gate": {
+      "pass": true,
+      "before": 46,
+      "after": 67,
+      "delta": 21,
+      "tBefore": 1.704,
+      "tAfter": 1.937,
+      "beforeScore": 0.688,
+      "afterScore": 0.78,
+      "addPxBefore": 2465,
+      "addPxAfter": 19,
+      "crownBefore": "3200",
+      "crownAfter": "3200"
+    },
+    "collision": {
+      "pass": true,
+      "tBefore": 1.937,
+      "tAfter": 2.433,
+      "dt": 0.496,
+      "midFriendBefore": 52,
+      "midFriendAfter": 33,
+      "midEnemyBefore": 3,
+      "midEnemyAfter": 1,
+      "laneFriendBefore": 68,
+      "laneFriendAfter": 50,
+      "laneEnemyBefore": 3,
+      "laneEnemyAfter": 1,
+      "onScreenCountBefore": 67,
+      "onScreenCountAfter": 80,
+      "hearth": "46",
+      "crownBefore": "3200",
+      "crownAfter": "3186",
+      "screenshot": "verify/screenshots/collision.png"
+    },
+    "stage1": {
+      "pass": true,
+      "clearSeconds": 211.02,
+      "winText": {
+        "kicker": "STAGE 1 CLEAR",
+        "heading": "Crown cracked",
+        "copy": "Kindling Yard goes quiet.",
+        "next": true,
+        "retry": true
+      },
+      "retry": {
+        "phase": "play",
+        "stage": "1",
+        "kicker": "Stage 1",
+        "stageName": "Kindling Yard",
+        "crown": "3200",
+        "hearth": "46",
+        "hudHidden": false,
+        "winHidden": true
+      },
+      "retryOk": true,
+      "secondClearSeconds": 217.46,
+      "next": {
+        "phase": "play",
+        "stage": "2",
+        "kicker": "Stage 2",
+        "stageName": "Cinder Span",
+        "crown": "5200",
+        "hearth": "36",
+        "winHidden": true
+      },
+      "nextOk": true
+    },
+    "lose": {
+      "pass": true,
+      "reached": true,
+      "stage": 3,
+      "stageName": "Crown Kiln",
+      "how": "aimed off the multiply and add gates so the unmultiplied line lost the trade and raiders reached the hearth",
+      "hearthTrace": [
+        {
+          "t": 90,
+          "hearth": "24",
+          "crown": "5187",
+          "phase": "play"
+        },
+        {
+          "t": 90.6,
+          "hearth": "22",
+          "crown": "5187",
+          "phase": "play"
+        },
+        {
+          "t": 91.2,
+          "hearth": "22",
+          "crown": "5187",
+          "phase": "play"
+        },
+        {
+          "t": 91.8,
+          "hearth": "22",
+          "crown": "5187",
+          "phase": "play"
+        },
+        {
+          "t": 92.4,
+          "hearth": "21",
+          "crown": "5187",
+          "phase": "play"
+        },
+        {
+          "t": 93.1,
+          "hearth": "19",
+          "crown": "5187",
+          "phase": "play"
+        },
+        {
+          "t": 93.7,
+          "hearth": "18",
+          "crown": "5187",
+          "phase": "play"
+        },
+        {
+          "t": 94.3,
+          "hearth": "16",
+          "crown": "5187",
+          "phase": "play"
+        },
+        {
+          "t": 94.9,
+          "hearth": "15",
+          "crown": "5187",
+          "phase": "play"
+        },
+        {
+          "t": 95.5,
+          "hearth": "14",
+          "crown": "5187",
+          "phase": "play"
+        },
+        {
+          "t": 96.1,
+          "hearth": "12",
+          "crown": "5187",
+          "phase": "play"
+        },
+        {
+          "t": 96.7,
+          "hearth": "11",
+          "crown": "5187",
+          "phase": "play"
+        },
+        {
+          "t": 97.3,
+          "hearth": "10",
+          "crown": "5187",
+          "phase": "play"
+        },
+        {
+          "t": 97.9,
+          "hearth": "8",
+          "crown": "5187",
+          "phase": "play"
+        },
+        {
+          "t": 98.6,
+          "hearth": "7",
+          "crown": "5187",
+          "phase": "play"
+        },
+        {
+          "t": 99.2,
+          "hearth": "6",
+          "crown": "5187",
+          "phase": "play"
+        },
+        {
+          "t": 99.8,
+          "hearth": "4",
+          "crown": "5187",
+          "phase": "play"
+        },
+        {
+          "t": 100.4,
+          "hearth": "2",
+          "crown": "5187",
+          "phase": "play"
+        },
+        {
+          "t": 101,
+          "hearth": "1",
+          "crown": "5187",
+          "phase": "play"
+        },
+        {
+          "t": 101.6,
+          "hearth": "0",
+          "crown": "5187",
+          "phase": "lose"
+        }
+      ],
+      "seconds": 10.16,
+      "screen": {
+        "heading": "Line broken",
+        "copy": ""
+      },
+      "retry": {
+        "phase": "play",
+        "stage": "3",
+        "kicker": "Stage 3",
+        "stageName": "Crown Kiln",
+        "crown": "5600",
+        "hearth": "30",
+        "loseHidden": true,
+        "hudHidden": false
+      },
+      "retryOk": true
+    },
+    "console": {
+      "pass": true,
+      "errors": []
+    }
+  },
+  "errors": [],
+  "notes": [
+    "collision screenshot at t=1.704 midF=24 midE=4"
+  ],
+  "stage1ClearSeconds": 211.02,
+  "finalUrl": "https://souljazzfunk.github.io/mob-crowd-game/",
+  "httpStatus": 200,
+  "build": "emberline-1",
+  "layout": {
+    "lane": {
+      "x": 437.5,
+      "y": 64,
+      "w": 405,
+      "h": 720
+    },
+    "cssW": 1280,
+    "cssH": 800,
+    "dpr": 1,
+    "fontSize": 64.8,
+    "observeMs": 49
+  },
+  "drag": {
+    "leftMuzzleCx": null,
+    "rightMuzzleCx": 758.3333333333333,
+    "leftCount": 6,
+    "rightCount": 18,
+    "separated": false
+  }
+}

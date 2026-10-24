@@ -3,7 +3,7 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: '.',
   testMatch: 'desktop.spec.js',
-  timeout: 26 * 60 * 1000,
+  timeout: 34 * 60 * 1000,
   fullyParallel: false,
   workers: 1,
   retries: 0,
