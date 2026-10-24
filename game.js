@@ -1,26 +1,27 @@
 'use strict';
 
-/* Emberline — a three-stage cannon column game. Original art, drawn on canvas. */
+/* Emberline — cannon column. Raiders march down in a dense crowd. */
 
 (function () {
-  var BUILD = 'emberline-1';
-  var MAX_F = 560;
-  var MAX_E = 340;
-  var MAX_P = 420;
+  var BUILD = 'emberline-2';
+  var MAX_F = 640;
+  var MAX_E = 960;
+  var MAX_P = 480;
   var MAX_FL = 36;
   var MAX_GATES = 12;
   var STEP = 1 / 60;
   var FRAME_N = 120;
-  var GW = 20;
-  var GH = 32;
-  var GMAX = 40;
-  var HIT_X = 13;
-  var HIT_Y = 16;
+  var GW = 18;
+  var GH = 28;
+  var GMAX = 12;
+  var HIT_X = 20;
+  var HIT_Y = 20;
   var HIT_X2 = HIT_X * HIT_X;
   var HIT_Y2 = HIT_Y * HIT_Y;
   var HIT_LIM = HIT_X2 * HIT_Y2;
   var TAU = Math.PI * 2;
   var SPENT = '\u2014';
+  var LABELS = ['', 'x2', 'x3', '+10', '+12', '+15', '+16', '+18', '-5', '-8', '-10', '-12'];
 
   var STAGES = [
     {
@@ -29,13 +30,12 @@
       playerMax: 46,
       fireEvery: 0.082,
       friendlyV: 0.33,
-      enemyV: 0.17,
-      waveEvery0: 2.55,
-      waveEveryMin: 1.6,
-      waveRamp: 0.009,
-      waveCount0: 3,
-      waveCountMax: 7,
-      waveCountRamp: 0.04,
+      enemyV: 0.08,
+      colsWant: 8,
+      openRows: 10,
+      gapFrac: 0.044,
+      topFrac: 0.115,
+      frontLimit: 0.40,
       gates: [
         { nx: 0.04, ny: 0.58, nw: 0.36, nh: 0.074, op: 'mul', v: 2, nvx: 0.042, rate: 28 },
         { nx: 0.58, ny: 0.58, nw: 0.36, nh: 0.074, op: 'add', v: 10, nvx: -0.038 },
@@ -50,13 +50,12 @@
       playerMax: 36,
       fireEvery: 0.078,
       friendlyV: 0.35,
-      enemyV: 0.22,
-      waveEvery0: 2.05,
-      waveEveryMin: 1.2,
-      waveRamp: 0.014,
-      waveCount0: 5,
-      waveCountMax: 12,
-      waveCountRamp: 0.07,
+      enemyV: 0.095,
+      colsWant: 13,
+      openRows: 11,
+      gapFrac: 0.04,
+      topFrac: 0.11,
+      frontLimit: 0.42,
       gates: [
         { nx: 0.03, ny: 0.60, nw: 0.30, nh: 0.07, op: 'mul', v: 2, nvx: 0.08, rate: 26 },
         { nx: 0.38, ny: 0.60, nw: 0.26, nh: 0.07, op: 'sub', v: 8, nvx: -0.07 },
@@ -73,13 +72,12 @@
       playerMax: 30,
       fireEvery: 0.074,
       friendlyV: 0.37,
-      enemyV: 0.27,
-      waveEvery0: 1.65,
-      waveEveryMin: 0.95,
-      waveRamp: 0.016,
-      waveCount0: 7,
-      waveCountMax: 16,
-      waveCountRamp: 0.09,
+      enemyV: 0.11,
+      colsWant: 14,
+      openRows: 12,
+      gapFrac: 0.038,
+      topFrac: 0.105,
+      frontLimit: 0.44,
       gates: [
         { nx: 0.02, ny: 0.62, nw: 0.24, nh: 0.066, op: 'mul', v: 2, nvx: 0.11, rate: 30 },
         { nx: 0.30, ny: 0.62, nw: 0.34, nh: 0.066, op: 'sub', v: 12, nvx: -0.09 },
@@ -165,6 +163,8 @@
   var activePointer = -1;
   var keysLeft = false;
   var keysRight = false;
+  var marchCols = 10;
+  var enemyPeak = 0;
 
   var hudCount = -1;
   var hudEnemy = -1;
@@ -196,33 +196,42 @@
     return v < a ? a : v > b ? b : v;
   }
 
-  function makePool(n) {
-    var items = new Array(n);
-    var free = new Array(n);
-    for (var i = 0; i < n; i++) {
-      items[i] = {
-        alive: false,
-        dying: false,
-        frozen: false,
-        x: 0,
-        y: 0,
-        py: 0,
-        vx: 0,
-        vy: 0,
-        r: 5,
-        v: 0,
-        gatesHit: 0,
-        born: 0,
-        life: 0,
-        max: 0,
-        color: 0,
-        size: 2,
-        text: '',
-        kind: 0
-      };
-      free[i] = items[i];
+  function labelId(op, v) {
+    var s = op === 'mul' ? 'x' + v : op === 'add' ? '+' + v : '-' + v;
+    for (var i = 1; i < LABELS.length; i++) {
+      if (LABELS[i] === s) return i;
     }
-    return { items: items, free: free, freeCount: n, aliveCount: 0 };
+    return 0;
+  }
+
+  function makePool(n) {
+    var free = new Uint16Array(n);
+    for (var i = 0; i < n; i++) free[i] = i;
+    return {
+      cap: n,
+      alive: new Uint8Array(n),
+      dying: new Uint8Array(n),
+      x: new Float32Array(n),
+      y: new Float32Array(n),
+      py: new Float32Array(n),
+      vx: new Float32Array(n),
+      vy: new Float32Array(n),
+      r: new Float32Array(n),
+      v: new Float32Array(n),
+      life: new Float32Array(n),
+      max: new Float32Array(n),
+      size: new Float32Array(n),
+      gates: new Uint32Array(n),
+      born: new Uint32Array(n),
+      slot: new Uint16Array(n),
+      color: new Uint8Array(n),
+      kind: new Uint8Array(n),
+      text: new Uint8Array(n),
+      order: new Uint16Array(n),
+      free: free,
+      freeCount: n,
+      aliveCount: 0
+    };
   }
 
   var friendly = makePool(MAX_F);
@@ -237,63 +246,75 @@
       nx: 0, ny: 0, nw: 0.2, nh: 0.07, nvx: 0,
       gx: 0, gy: 0, gw: 10, gh: 10,
       op: 'mul', v: 2, rate: 0, tokens: 0, tokenMax: 0,
-      left: 0, active: false, bit: 1, flash: 0, flashCd: 0, label: 'x2'
+      left: 0, active: false, bit: 1, flash: 0, flashCd: 0,
+      label: 'x2', labelId: 1
     };
   }
 
   var DUST_N = 40;
-  var dust = new Array(DUST_N);
+  var dustX = new Float32Array(DUST_N);
+  var dustY = new Float32Array(DUST_N);
+  var dustV = new Float32Array(DUST_N);
+  var dustR = new Float32Array(DUST_N);
+  var dustVX = new Float32Array(DUST_N);
   for (var di = 0; di < DUST_N; di++) {
-    dust[di] = { x: (di * 97) % 300, y: (di * 53) % 600, v: 16 + (di % 6) * 7, r: 1 + (di % 3), vx: ((di % 7) - 3) * 3 };
+    dustX[di] = (di * 97) % 300;
+    dustY[di] = (di * 53) % 600;
+    dustV[di] = 16 + (di % 6) * 7;
+    dustR[di] = 1 + (di % 3);
+    dustVX[di] = ((di % 7) - 3) * 3;
   }
 
   function resetPool(pool) {
-    pool.freeCount = 0;
     pool.aliveCount = 0;
-    var items = pool.items;
-    for (var i = 0; i < items.length; i++) {
-      var u = items[i];
-      u.alive = false;
-      u.dying = false;
-      u.frozen = false;
-      pool.free[pool.freeCount++] = u;
+    pool.freeCount = 0;
+    var n = pool.cap;
+    var alive = pool.alive;
+    var dying = pool.dying;
+    var free = pool.free;
+    for (var i = 0; i < n; i++) {
+      alive[i] = 0;
+      dying[i] = 0;
+      free[pool.freeCount++] = i;
     }
   }
 
   function acquire(pool) {
-    if (pool.freeCount <= 0) return null;
+    if (pool.freeCount <= 0) return -1;
     pool.freeCount -= 1;
-    var u = pool.free[pool.freeCount];
-    u.alive = true;
-    u.dying = false;
-    u.frozen = false;
+    var i = pool.free[pool.freeCount];
+    pool.alive[i] = 1;
+    pool.dying[i] = 0;
+    pool.order[pool.aliveCount] = i;
     pool.aliveCount += 1;
-    return u;
+    return i;
   }
 
-  function killUnit(u) {
-    if (!u.alive || u.dying) return;
-    u.dying = true;
+  function killIndex(pool, i) {
+    if (!pool.alive[i] || pool.dying[i]) return;
+    pool.dying[i] = 1;
   }
 
   function sweep(pool) {
-    var items = pool.items;
-    for (var i = 0; i < items.length; i++) {
-      var u = items[i];
-      if (!u.dying) continue;
-      u.dying = false;
-      u.alive = false;
-      pool.free[pool.freeCount++] = u;
-      pool.aliveCount -= 1;
+    var order = pool.order;
+    var dying = pool.dying;
+    var alive = pool.alive;
+    var free = pool.free;
+    var k = 0;
+    var n = pool.aliveCount;
+    while (k < n) {
+      var i = order[k];
+      if (dying[i]) {
+        dying[i] = 0;
+        alive[i] = 0;
+        n -= 1;
+        order[k] = order[n];
+        free[pool.freeCount++] = i;
+      } else {
+        k += 1;
+      }
     }
-  }
-
-  function releaseNow(pool, u) {
-    if (!u.alive) return;
-    u.alive = false;
-    u.dying = false;
-    pool.free[pool.freeCount++] = u;
-    pool.aliveCount -= 1;
+    pool.aliveCount = n;
   }
 
   function readSafe() {
@@ -308,8 +329,8 @@
 
   function layoutDust() {
     for (var i = 0; i < DUST_N; i++) {
-      dust[i].x = (i * 97) % Math.max(1, cssW);
-      dust[i].y = (i * 53) % Math.max(1, cssH);
+      dustX[i] = (i * 97) % Math.max(1, cssW);
+      dustY[i] = (i * 53) % Math.max(1, cssH);
     }
   }
 
@@ -384,6 +405,33 @@
     return lane.y + lane.h * 0.112;
   }
 
+  function computeCols(want) {
+    var margin = 14;
+    var minSpacing = 46;
+    var fit = Math.floor((lane.w - margin * 2) / minSpacing);
+    if (fit < 7) fit = 7;
+    if (want < 7) want = 7;
+    if (want > fit) want = fit;
+    if (want > 14) want = 14;
+    return want;
+  }
+
+  function columnSpacing() {
+    return (lane.w - 28) / marchCols;
+  }
+
+  function enemyRadius() {
+    var rad = columnSpacing() * 0.4;
+    if (rad < 18) rad = 18;
+    if (rad > 24) rad = 24;
+    return rad;
+  }
+
+  function marchX(slot) {
+    var spacing = columnSpacing();
+    return lane.x + 14 + (slot + 0.5) * spacing;
+  }
+
   function showScreen(name) {
     phase = name;
     var any = false;
@@ -419,9 +467,8 @@
       g.bit = 1 << i;
       g.flash = 0;
       g.flashCd = 0;
-      if (src.op === 'mul') g.label = 'x' + src.v;
-      else if (src.op === 'add') g.label = '+' + src.v;
-      else g.label = '-' + src.v;
+      g.labelId = labelId(src.op, src.v);
+      g.label = LABELS[g.labelId] || (src.op === 'mul' ? 'x' + src.v : src.op === 'add' ? '+' + src.v : '-' + src.v);
     }
     syncGates();
   }
@@ -472,13 +519,13 @@
     playerMax = stage.playerMax;
     playerHp = playerMax;
     simTime = 0;
-    fireCd = 0.18;
-    waveCd = 1.35;
+    fireCd = 0.12;
+    waveCd = 0.4;
     waveSerial = 0;
     spawnSerial = 0;
     cannonNX = 0.5;
     targetNX = 0.5;
-    hintT = index === 0 ? 3.4 : 1.4;
+    hintT = index === 0 ? 2.2 : 1.1;
     shake = 0;
     hurtFlash = 0;
     muzzle = 0;
@@ -487,6 +534,7 @@
     spawnedTotal = 0;
     trackOp = '';
     trackVal = 0;
+    enemyPeak = 0;
     effect.op = '';
     effect.value = 0;
     effect.before = 0;
@@ -500,6 +548,8 @@
     hudCount = -1;
     hudEnemy = -1;
     hudPlayer = -1;
+    marchCols = computeCols(stage.colsWant);
+    spawnOpening();
     showScreen('play');
     stageKickerEl.textContent = 'Stage ' + (index + 1);
     stageNameEl.textContent = stage.name;
@@ -541,70 +591,95 @@
   }
 
   function spawnFriendly(x, y, gatesHit) {
-    var u = acquire(friendly);
-    if (!u) return null;
+    var i = acquire(friendly);
+    if (i < 0) return -1;
     var minX = lane.x + 6;
     var maxX = lane.x + lane.w - 6;
     if (x < minX) x = minX;
     else if (x > maxX) x = maxX;
     if (y < lane.y + 4) y = lane.y + 4;
-    u.x = x;
-    u.y = y;
-    u.py = y;
-    u.vx = ((spawnSerial % 5) - 2) * 4;
-    u.r = 4.6;
-    u.gatesHit = gatesHit || 0;
-    u.born = frameId;
-    u.frozen = false;
+    friendly.x[i] = x;
+    friendly.y[i] = y;
+    friendly.py[i] = y;
+    friendly.vx[i] = ((spawnSerial % 5) - 2) * 4;
+    friendly.r[i] = 4.6;
+    friendly.gates[i] = gatesHit || 0;
+    friendly.born[i] = frameId;
     spawnSerial += 1;
     spawnedTotal += 1;
-    return u;
+    return i;
   }
 
-  function spawnEnemy(x, y, v) {
-    var e = acquire(enemy);
-    if (!e) return null;
-    var minX = lane.x + 8;
-    var maxX = lane.x + lane.w - 8;
-    if (x < minX) x = minX;
-    else if (x > maxX) x = maxX;
-    e.x = x;
-    e.y = y;
-    e.r = 6.4;
-    e.v = v;
-    e.born = frameId;
-    e.frozen = false;
-    return e;
+  function spawnEnemy(slot, y, v) {
+    var i = acquire(enemy);
+    if (i < 0) return -1;
+    if (slot < 0) slot = 0;
+    if (slot >= marchCols) slot = marchCols - 1;
+    enemy.slot[i] = slot;
+    enemy.y[i] = y;
+    enemy.v[i] = v;
+    enemy.r[i] = enemyRadius();
+    enemy.x[i] = marchX(slot);
+    enemy.born[i] = frameId;
+    if (enemy.aliveCount > enemyPeak) enemyPeak = enemy.aliveCount;
+    return i;
+  }
+
+  function spawnRow(y) {
+    var v = stage.enemyV;
+    var n = marchCols;
+    for (var col = 0; col < n; col++) spawnEnemy(col, y, v);
+    waveSerial += n;
+  }
+
+  function spawnOpening() {
+    var gap = lane.h * stage.gapFrac;
+    if (gap < 28) gap = 28;
+    var top = lane.y + lane.h * stage.topFrac;
+    var limit = lane.y + lane.h * stage.frontLimit;
+    var y = top;
+    var guard = 0;
+    var rows = stage.openRows;
+    while (y <= limit && guard < rows) {
+      spawnRow(y);
+      y += gap;
+      guard += 1;
+    }
+    var speed = stage.enemyV * lane.h;
+    if (speed < 1) speed = 1;
+    waveCd = gap / speed;
   }
 
   function burst(x, y, n, color) {
     if (simSpeed > 1.05) n = 1;
-    for (var i = 0; i < n; i++) {
-      var p = acquire(particles);
-      if (!p) return;
-      var a = (i / n) * TAU;
-      var sp = 36 + (i % 4) * 22;
-      p.x = x;
-      p.y = y;
-      p.vx = Math.cos(a) * sp;
-      p.vy = Math.sin(a) * sp;
-      p.life = 0.32;
-      p.max = 0.32;
-      p.color = color;
-      p.size = 2 + (i % 3);
+    if (particles.aliveCount > 90) n = n > 1 ? 1 : n;
+    if (particles.aliveCount > 160) return;
+    for (var k = 0; k < n; k++) {
+      var i = acquire(particles);
+      if (i < 0) return;
+      var a = (k / n) * TAU;
+      var sp = 36 + (k % 4) * 22;
+      particles.x[i] = x;
+      particles.y[i] = y;
+      particles.vx[i] = Math.cos(a) * sp;
+      particles.vy[i] = Math.sin(a) * sp;
+      particles.life[i] = 0.32;
+      particles.max[i] = 0.32;
+      particles.color[i] = color;
+      particles.size[i] = 2 + (k % 3);
     }
   }
 
-  function spawnFloater(x, y, text, kind) {
+  function spawnFloater(x, y, textId, kind) {
     if (simSpeed > 1.05) return;
-    var f = acquire(floaters);
-    if (!f) return;
-    f.x = x;
-    f.y = y;
-    f.text = text;
-    f.kind = kind;
-    f.life = 0.7;
-    f.max = 0.7;
+    var i = acquire(floaters);
+    if (i < 0) return;
+    floaters.x[i] = x;
+    floaters.y[i] = y;
+    floaters.text[i] = textId;
+    floaters.kind[i] = kind;
+    floaters.life[i] = 0.7;
+    floaters.max[i] = 0.7;
   }
 
   function unlockAudio() {
@@ -643,8 +718,9 @@
     } catch (err) {}
   }
 
-  function applyMul(u, g) {
-    u.gatesHit |= g.bit;
+  function applyMul(i, g) {
+    var hit = friendly.gates[i] | g.bit;
+    friendly.gates[i] = hit;
     var need = g.v - 1;
     if (need > 0 && g.tokens >= 1) {
       var can = g.tokens < need ? (g.tokens | 0) : need;
@@ -653,10 +729,12 @@
         g.tokens -= can;
         var mid = (can - 1) * 0.5;
         var spawned = 0;
+        var ux = friendly.x[i];
+        var uy = friendly.y[i];
         for (var k = 0; k < can; k++) {
-          var s = spawnFriendly(u.x + (k - mid) * 8, u.y - (k + 1) * 9, u.gatesHit);
-          if (s) {
-            s.vx = (k - mid) * 10;
+          var s = spawnFriendly(ux + (k - mid) * 8, uy - (k + 1) * 9, hit);
+          if (s >= 0) {
+            friendly.vx[s] = (k - mid) * 10;
             spawned += 1;
           }
         }
@@ -665,63 +743,68 @@
     }
     g.flash = 1;
     if (g.flashCd <= 0) {
-      spawnFloater(u.x, g.gy, g.label, 0);
+      spawnFloater(friendly.x[i], g.gy, g.labelId, 0);
       g.flashCd = 0.16;
       blip(540, 0.04, 'square', 0.02);
     }
   }
 
-  function applyAdd(u, g) {
-    u.gatesHit |= g.bit;
+  function applyAdd(i, g) {
+    friendly.gates[i] = friendly.gates[i] | g.bit;
     var before = friendly.aliveCount;
     var n = g.v;
     var spawned = 0;
-    var hit = u.gatesHit | g.bit;
+    var hit = friendly.gates[i];
     for (var k = 0; k < n; k++) {
       var x = g.gx + ((k + 0.5) / n) * g.gw;
       var s = spawnFriendly(x, g.gy - 8, hit);
-      if (s) spawned += 1;
+      if (s >= 0) spawned += 1;
     }
     g.left = 0;
     g.active = false;
     g.flash = 1;
     if (g.flashCd <= 0) {
-      spawnFloater(g.gx + g.gw * 0.5, g.gy, g.label, 1);
+      spawnFloater(g.gx + g.gw * 0.5, g.gy, g.labelId, 1);
       g.flashCd = 0.2;
       blip(680, 0.07, 'square', 0.03);
     }
     noteEffect('add', g.v, before, before + spawned);
   }
 
-  function applySub(u, g) {
-    u.gatesHit |= g.bit;
+  function applySub(i, g) {
+    friendly.gates[i] = friendly.gates[i] | g.bit;
     var before = friendly.aliveCount;
-    killUnit(u);
+    killIndex(friendly, i);
     g.left -= 1;
     if (g.left <= 0) g.active = false;
     g.flash = 1;
     if (g.flashCd <= 0) {
-      spawnFloater(u.x, u.y, g.label, 2);
+      spawnFloater(friendly.x[i], friendly.y[i], g.labelId, 2);
       g.flashCd = 0.14;
       blip(170, 0.05, 'sawtooth', 0.02);
     }
     noteEffect('sub', g.v, before, before - 1);
   }
 
-  function applyGates(u) {
-    for (var i = 0; i < gateCount; i++) {
-      var g = gates[i];
+  function applyGates(i) {
+    var x = friendly.x[i];
+    var y = friendly.y[i];
+    var py = friendly.py[i];
+    var bits = friendly.gates[i];
+    for (var gi2 = 0; gi2 < gateCount; gi2++) {
+      var g = gates[gi2];
       if (!g.active) continue;
-      if ((u.gatesHit & g.bit) !== 0) continue;
-      if (u.x < g.gx || u.x > g.gx + g.gw) continue;
+      if ((bits & g.bit) !== 0) continue;
+      if (x < g.gx || x > g.gx + g.gw) continue;
       var top = g.gy;
       var bot = g.gy + g.gh;
-      if (u.py < top) continue;
-      if (u.y > bot) continue;
-      if (g.op === 'mul') applyMul(u, g);
-      else if (g.op === 'add') applyAdd(u, g);
-      else applySub(u, g);
-      if (u.dying) return;
+      if (py < top) continue;
+      if (y > bot) continue;
+      if (g.op === 'mul') applyMul(i, g);
+      else if (g.op === 'add') applyAdd(i, g);
+      else applySub(i, g);
+      if (friendly.dying[i]) return;
+      bits = friendly.gates[i];
     }
   }
 
@@ -815,97 +898,87 @@
     if (guard === 3 && fireCd < 0) fireCd = 0;
   }
 
-  function spawnWave(count) {
-    var base = lane.y + lane.h * 0.13;
-    for (var i = 0; i < count; i++) {
-      var slot = waveSerial + i;
-      var nx = 0.08 + ((slot * 37) % 84) / 100;
-      var y = base + (i % 5) * 7;
-      var v = stage.enemyV * (0.9 + (slot % 5) * 0.045);
-      spawnEnemy(lane.x + nx * lane.w, y, v);
-    }
-    waveSerial += count;
-  }
-
   function updateWaves(dt) {
     waveCd -= dt;
     if (waveCd > 0) return;
-    var t = simTime;
-    var count = stage.waveCount0 + ((t * stage.waveCountRamp) | 0);
-    if (count > stage.waveCountMax) count = stage.waveCountMax;
-    var every = stage.waveEvery0 - t * stage.waveRamp;
-    if (every < stage.waveEveryMin) every = stage.waveEveryMin;
+    var gap = lane.h * stage.gapFrac;
+    if (gap < 28) gap = 28;
+    var speed = stage.enemyV * lane.h;
+    if (speed < 1) speed = 1;
+    var every = gap / speed;
     waveCd += every;
     if (waveCd < 0) waveCd = 0;
-    spawnWave(count);
+    spawnRow(lane.y + lane.h * stage.topFrac);
   }
 
   function moveFriendlies(dt) {
     var speed = stage.friendlyV * lane.h;
-    var items = friendly.items;
+    var order = friendly.order;
+    var n = friendly.aliveCount;
     var minX = lane.x + 5;
     var maxX = lane.x + lane.w - 5;
     var by = baseY();
-    for (var i = 0; i < items.length; i++) {
-      var u = items[i];
-      if (!u.alive || u.dying || u.born === frameId) continue;
-      u.py = u.y;
-      if (!u.frozen) {
-        u.x += u.vx * dt;
-        u.y -= speed * dt;
-        u.vx *= 0.985;
-      }
-      if (u.x < minX) u.x = minX;
-      else if (u.x > maxX) u.x = maxX;
-      if (u.frozen) continue;
-      applyGates(u);
-      if (u.dying || !u.alive) continue;
-      if (u.y <= by) {
-        killUnit(u);
+    var xs = friendly.x;
+    var ys = friendly.y;
+    var pys = friendly.py;
+    var vxs = friendly.vx;
+    var born = friendly.born;
+    var dying = friendly.dying;
+    var alive = friendly.alive;
+    for (var k = 0; k < n; k++) {
+      var i = order[k];
+      if (!alive[i] || dying[i] || born[i] === frameId) continue;
+      pys[i] = ys[i];
+      xs[i] += vxs[i] * dt;
+      ys[i] -= speed * dt;
+      vxs[i] *= 0.985;
+      if (xs[i] < minX) xs[i] = minX;
+      else if (xs[i] > maxX) xs[i] = maxX;
+      applyGates(i);
+      if (dying[i] || !alive[i]) continue;
+      if (ys[i] <= by) {
+        killIndex(friendly, i);
         if (enemyHp > 0) enemyHp -= 1;
         if (enemyHp < 0) enemyHp = 0;
         if (baseBlipT <= 0) {
           baseBlipT = 0.12;
           blip(880, 0.03, 'square', 0.015);
         }
-        if ((spawnSerial + i) % 4 === 0) burst(u.x, by + 4, 2, 3);
+        if ((spawnSerial + i) % 4 === 0) burst(xs[i], by + 4, 2, 3);
         if (enemyHp <= 0) pendingEnd = 'win';
       }
     }
   }
 
   function moveEnemies(dt) {
-    var items = enemy.items;
-    var cx = cannonX();
-    var maxSteer = lane.w * 0.55;
-    var killY = cannonY() + 8;
+    var order = enemy.order;
+    var n = enemy.aliveCount;
+    var ys = enemy.y;
+    var vs = enemy.v;
+    var born = enemy.born;
+    var dying = enemy.dying;
+    var alive = enemy.alive;
     var lh = lane.h;
-    for (var i = 0; i < items.length; i++) {
-      var e = items[i];
-      if (!e.alive || e.dying || e.born === frameId) continue;
-      if (!e.frozen) {
-        var desired = (cx - e.x) * 1.35;
-        if (desired > maxSteer) desired = maxSteer;
-        else if (desired < -maxSteer) desired = -maxSteer;
-        e.x += desired * dt;
-        e.y += e.v * lh * dt;
-      }
-      var minX = lane.x + e.r;
-      var maxX = lane.x + lane.w - e.r;
-      if (e.x < minX) e.x = minX;
-      else if (e.x > maxX) e.x = maxX;
-      if (e.frozen) continue;
-      if (e.y >= killY) {
-        killUnit(e);
+    var killY = cannonY() + 10;
+    var rad = enemyRadius();
+    for (var k = 0; k < n; k++) {
+      var i = order[k];
+      if (!alive[i] || dying[i] || born[i] === frameId) continue;
+      ys[i] += vs[i] * lh * dt;
+      enemy.r[i] = rad;
+      enemy.x[i] = marchX(enemy.slot[i]);
+      if (ys[i] >= killY) {
+        killIndex(enemy, i);
         playerHp -= 1;
         if (playerHp < 0) playerHp = 0;
-        shake = 7;
+        shake = 8;
         hurtFlash = 0.18;
         blip(120, 0.08, 'sawtooth', 0.03);
-        burst(e.x, killY - 6, 4, 3);
+        burst(enemy.x[i], killY - 8, 3, 2);
         if (playerHp <= 0 && pendingEnd !== 'win') pendingEnd = 'lose';
       }
     }
+    if (enemy.aliveCount > enemyPeak) enemyPeak = enemy.aliveCount;
   }
 
   function collideAll() {
@@ -915,13 +988,17 @@
     var y0 = lane.y;
     var cw = lane.w / GW;
     var ch = lane.h / GH;
-    var enemies = enemy.items;
-    var nE = enemies.length;
-    for (var i = 0; i < nE; i++) {
-      var e = enemies[i];
-      if (!e.alive || e.dying) continue;
-      var cx = (e.x - x0) / cw;
-      var cy = (e.y - y0) / ch;
+    var eOrder = enemy.order;
+    var nE = enemy.aliveCount;
+    var ex = enemy.x;
+    var ey = enemy.y;
+    var eAlive = enemy.alive;
+    var eDying = enemy.dying;
+    for (var ei = 0; ei < nE; ei++) {
+      var id = eOrder[ei];
+      if (!eAlive[id] || eDying[id]) continue;
+      var cx = (ex[id] - x0) / cw;
+      var cy = (ey[id] - y0) / ch;
       if (cx < 0) cx = 0;
       else if (cx >= GW) cx = GW - 1;
       else cx = cx | 0;
@@ -929,19 +1006,24 @@
       else if (cy >= GH) cy = GH - 1;
       else cy = cy | 0;
       var cell = cy * GW + cx;
-      var n = cellCount[cell];
-      if (n < GMAX) {
-        cellIds[cell * GMAX + n] = i;
-        cellCount[cell] = n + 1;
+      var cn0 = cellCount[cell];
+      if (cn0 < GMAX) {
+        cellIds[cell * GMAX + cn0] = id;
+        cellCount[cell] = cn0 + 1;
       }
     }
-    var friends = friendly.items;
-    var nF = friends.length;
-    for (var f = 0; f < nF; f++) {
-      var u = friends[f];
-      if (!u.alive || u.dying || u.born === frameId) continue;
-      var ux = (u.x - x0) / cw;
-      var uy = (u.y - y0) / ch;
+    var fOrder = friendly.order;
+    var nF = friendly.aliveCount;
+    var fx = friendly.x;
+    var fy = friendly.y;
+    var fAlive = friendly.alive;
+    var fDying = friendly.dying;
+    var fBorn = friendly.born;
+    for (var fk = 0; fk < nF; fk++) {
+      var fi = fOrder[fk];
+      if (!fAlive[fi] || fDying[fi] || fBorn[fi] === frameId) continue;
+      var ux = (fx[fi] - x0) / cw;
+      var uy = (fy[fi] - y0) / ch;
       if (ux < 0) ux = 0;
       else if (ux >= GW) ux = GW - 1;
       else ux = ux | 0;
@@ -949,6 +1031,8 @@
       else if (uy >= GH) uy = GH - 1;
       else uy = uy | 0;
       var hit = false;
+      var px = fx[fi];
+      var py = fy[fi];
       for (var oy = -1; oy <= 1 && !hit; oy++) {
         var yy = uy + oy;
         if (yy < 0 || yy >= GH) continue;
@@ -959,14 +1043,14 @@
           var cn = cellCount[cidx];
           var base = cidx * GMAX;
           for (var k = 0; k < cn; k++) {
-            var foe = enemies[cellIds[base + k]];
-            if (!foe.alive || foe.dying) continue;
-            var dx = u.x - foe.x;
-            var dy = u.y - foe.y;
+            var foe = cellIds[base + k];
+            if (!eAlive[foe] || eDying[foe]) continue;
+            var dx = px - ex[foe];
+            var dy = py - ey[foe];
             if (dx * dx * HIT_Y2 + dy * dy * HIT_X2 <= HIT_LIM) {
-              killUnit(u);
-              killUnit(foe);
-              burst((u.x + foe.x) * 0.5, (u.y + foe.y) * 0.5, 3, 2);
+              killIndex(friendly, fi);
+              killIndex(enemy, foe);
+              burst((px + ex[foe]) * 0.5, (py + ey[foe]) * 0.5, 2, 2);
               hit = true;
               break;
             }
@@ -977,46 +1061,54 @@
   }
 
   function updateParticles(dt) {
-    var items = particles.items;
-    for (var i = 0; i < items.length; i++) {
-      var p = items[i];
-      if (!p.alive) continue;
-      p.life -= dt;
-      if (p.life <= 0) {
-        releaseNow(particles, p);
+    var order = particles.order;
+    var n = particles.aliveCount;
+    var life = particles.life;
+    var xs = particles.x;
+    var ys = particles.y;
+    var vxs = particles.vx;
+    var vys = particles.vy;
+    for (var k = 0; k < n; k++) {
+      var i = order[k];
+      life[i] -= dt;
+      if (life[i] <= 0) {
+        particles.dying[i] = 1;
         continue;
       }
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
-      p.vy += 40 * dt;
+      xs[i] += vxs[i] * dt;
+      ys[i] += vys[i] * dt;
+      vys[i] += 40 * dt;
     }
+    sweep(particles);
   }
 
   function updateFloaters(dt) {
-    var items = floaters.items;
-    for (var i = 0; i < items.length; i++) {
-      var f = items[i];
-      if (!f.alive) continue;
-      f.life -= dt;
-      if (f.life <= 0) {
-        releaseNow(floaters, f);
+    var order = floaters.order;
+    var n = floaters.aliveCount;
+    var life = floaters.life;
+    var ys = floaters.y;
+    for (var k = 0; k < n; k++) {
+      var i = order[k];
+      life[i] -= dt;
+      if (life[i] <= 0) {
+        floaters.dying[i] = 1;
         continue;
       }
-      f.y -= 36 * dt;
+      ys[i] -= 36 * dt;
     }
+    sweep(floaters);
   }
 
   function updateDust(dt) {
     for (var i = 0; i < DUST_N; i++) {
-      var d = dust[i];
-      d.y -= d.v * dt;
-      d.x += d.vx * dt;
-      if (d.y < -8) {
-        d.y = cssH + 6;
-        d.x = (i * 97 + d.y) % Math.max(1, cssW);
+      dustY[i] -= dustV[i] * dt;
+      dustX[i] += dustVX[i] * dt;
+      if (dustY[i] < -8) {
+        dustY[i] = cssH + 6;
+        dustX[i] = (i * 97 + dustY[i]) % Math.max(1, cssW);
       }
-      if (d.x < -8) d.x = cssW + 4;
-      else if (d.x > cssW + 8) d.x = -4;
+      if (dustX[i] < -8) dustX[i] = cssW + 4;
+      else if (dustX[i] > cssW + 8) dustX[i] = -4;
     }
   }
 
@@ -1103,19 +1195,19 @@
     ctx.fillStyle = '#3c2a34';
     var x1 = lane.x - 14;
     var x2 = right + 8;
+    ctx.beginPath();
     for (var i = 0; i < 9; i++) {
       var y = lane.y + (i + 0.45) * lane.h / 9;
       if (x1 > 6) {
-        ctx.beginPath();
+        ctx.moveTo(x1 + 3.5, y);
         ctx.arc(x1, y, 3.5, 0, TAU);
-        ctx.fill();
       }
       if (x2 < cssW - 6) {
-        ctx.beginPath();
+        ctx.moveTo(x2 + 3.5, y);
         ctx.arc(x2, y, 3.5, 0, TAU);
-        ctx.fill();
       }
     }
+    ctx.fill();
   }
 
   function drawLane() {
@@ -1214,72 +1306,94 @@
   }
 
   function drawUnits() {
-    var items = friendly.items;
-    var foes = enemy.items;
-    var detailed = friendly.aliveCount + enemy.aliveCount < 160;
+    var fOrder = friendly.order;
+    var nF = friendly.aliveCount;
+    var fAlive = friendly.alive;
+    var fxs = friendly.x;
+    var fys = friendly.y;
+    var fr = friendly.r;
     ctx.fillStyle = '#ff9a3c';
     ctx.beginPath();
-    for (var i = 0; i < items.length; i++) {
-      var u = items[i];
-      if (!u.alive) continue;
-      ctx.moveTo(u.x + u.r, u.y);
-      ctx.arc(u.x, u.y, u.r, 0, TAU);
+    for (var i = 0; i < nF; i++) {
+      var fi = fOrder[i];
+      if (!fAlive[fi]) continue;
+      var r = fr[fi];
+      ctx.moveTo(fxs[fi] + r, fys[fi]);
+      ctx.arc(fxs[fi], fys[fi], r, 0, TAU);
     }
     ctx.fill();
-    if (detailed) {
-      ctx.fillStyle = '#fff1cf';
-      ctx.beginPath();
-      for (var j = 0; j < items.length; j++) {
-        var c = items[j];
-        if (!c.alive) continue;
-        ctx.moveTo(c.x + 1.7, c.y);
-        ctx.arc(c.x, c.y, 1.7, 0, TAU);
-      }
-      ctx.fill();
-    }
 
-    ctx.fillStyle = '#35d0c4';
+    var eOrder = enemy.order;
+    var nE = enemy.aliveCount;
+    var eAlive = enemy.alive;
+    var exs = enemy.x;
+    var eys = enemy.y;
+    var ers = enemy.r;
+    ctx.fillStyle = '#021614';
     ctx.beginPath();
-    for (var k = 0; k < foes.length; k++) {
-      var e = foes[k];
-      if (!e.alive) continue;
-      var r = e.r;
-      ctx.moveTo(e.x, e.y - r);
-      ctx.lineTo(e.x + r * 0.86, e.y);
-      ctx.lineTo(e.x, e.y + r);
-      ctx.lineTo(e.x - r * 0.86, e.y);
+    for (var a = 0; a < nE; a++) {
+      var ea = eOrder[a];
+      if (!eAlive[ea]) continue;
+      var ro = ers[ea] + 2.6;
+      ctx.moveTo(exs[ea] + ro, eys[ea]);
+      ctx.arc(exs[ea], eys[ea], ro, 0, TAU);
+    }
+    ctx.fill();
+    ctx.fillStyle = '#00F6DE';
+    ctx.beginPath();
+    for (var b = 0; b < nE; b++) {
+      var eb = eOrder[b];
+      if (!eAlive[eb]) continue;
+      var rb = ers[eb];
+      ctx.moveTo(exs[eb] + rb, eys[eb]);
+      ctx.arc(exs[eb], eys[eb], rb, 0, TAU);
+    }
+    ctx.fill();
+    ctx.fillStyle = '#064840';
+    ctx.beginPath();
+    for (var c = 0; c < nE; c++) {
+      var ec = eOrder[c];
+      if (!eAlive[ec]) continue;
+      var rc = ers[ec];
+      var xc = exs[ec];
+      var yc = eys[ec];
+      ctx.moveTo(xc - rc * 0.42, yc - rc * 0.08);
+      ctx.lineTo(xc + rc * 0.42, yc - rc * 0.08);
+      ctx.lineTo(xc, yc + rc * 0.58);
       ctx.closePath();
     }
     ctx.fill();
-    if (detailed) {
-      ctx.fillStyle = '#e7fffb';
-      ctx.beginPath();
-      for (var n = 0; n < foes.length; n++) {
-        var e2 = foes[n];
-        if (!e2.alive) continue;
-        ctx.moveTo(e2.x, e2.y - 2);
-        ctx.lineTo(e2.x + 2, e2.y);
-        ctx.lineTo(e2.x, e2.y + 2);
-        ctx.lineTo(e2.x - 2, e2.y);
-        ctx.closePath();
-      }
-      ctx.fill();
+    ctx.fillStyle = '#F4FFFD';
+    ctx.beginPath();
+    for (var d = 0; d < nE; d++) {
+      var ed = eOrder[d];
+      if (!eAlive[ed]) continue;
+      var rd = ers[ed] * 0.28;
+      ctx.moveTo(exs[ed] + rd, eys[ed] - ers[ed] * 0.22);
+      ctx.arc(exs[ed], eys[ed] - ers[ed] * 0.22, rd, 0, TAU);
     }
+    ctx.fill();
   }
 
   function drawParticles() {
     var cols = ['#ffb15a', '#fff1cf', '#7ef0e4', '#ff8b96', '#f0c15a'];
-    var items = particles.items;
+    var order = particles.order;
+    var n = particles.aliveCount;
+    var alive = particles.alive;
+    var color = particles.color;
+    var xs = particles.x;
+    var ys = particles.y;
+    var size = particles.size;
     for (var c = 0; c < cols.length; c++) {
       ctx.fillStyle = cols[c];
       ctx.beginPath();
       var any = false;
-      for (var i = 0; i < items.length; i++) {
-        var p = items[i];
-        if (!p.alive || p.color !== c) continue;
+      for (var i = 0; i < n; i++) {
+        var p = order[i];
+        if (!alive[p] || color[p] !== c) continue;
         any = true;
-        var s = p.size;
-        ctx.rect(p.x, p.y, s, s);
+        var s = size[p];
+        ctx.rect(xs[p], ys[p], s, s);
       }
       if (any) ctx.fill();
     }
@@ -1290,13 +1404,19 @@
     ctx.font = floatFont;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    var items = floaters.items;
-    for (var i = 0; i < items.length; i++) {
-      var f = items[i];
-      if (!f.alive) continue;
-      ctx.globalAlpha = f.life / f.max;
-      ctx.fillStyle = cols[f.kind] || cols[0];
-      ctx.fillText(f.text, f.x, f.y);
+    var order = floaters.order;
+    var n = floaters.aliveCount;
+    var alive = floaters.alive;
+    for (var k = 0; k < n; k++) {
+      var i = order[k];
+      if (!alive[i]) continue;
+      var life = floaters.life[i];
+      var max = floaters.max[i];
+      ctx.globalAlpha = max > 0 ? life / max : 1;
+      var kind = floaters.kind[i];
+      ctx.fillStyle = cols[kind] || cols[0];
+      var label = LABELS[floaters.text[i]] || '';
+      ctx.fillText(label, floaters.x[i], floaters.y[i]);
     }
     ctx.globalAlpha = 1;
   }
@@ -1369,10 +1489,11 @@
     drawLane();
     ctx.globalAlpha = 0.45;
     ctx.fillStyle = '#ffb15a';
+    ctx.beginPath();
     for (var i = 0; i < DUST_N; i++) {
-      var d = dust[i];
-      ctx.fillRect(d.x, d.y, d.r, d.r);
+      ctx.rect(dustX[i], dustY[i], dustR[i], dustR[i]);
     }
+    ctx.fill();
     ctx.globalAlpha = 1;
     drawCrown();
     var aimX = cannonX();
@@ -1528,23 +1649,21 @@
       var x = lane.x + ((col + 0.5) / 16) * lane.w;
       var y = lane.y + lane.h * (0.62 + (row % 7) * 0.03);
       var u = spawnFriendly(x, y, 0xffff);
-      if (!u) break;
-      u.born = frameId - 1;
-      u.vx = 0;
-      u.gatesHit = 0xffff;
+      if (u < 0) break;
+      friendly.born[u] = frameId > 0 ? frameId - 1 : 0;
+      friendly.vx[u] = 0;
+      friendly.gates[u] = 0xffff;
       guard += 1;
     }
     var eTarget = nE > MAX_E ? MAX_E : nE;
     var j = 0;
     while (enemy.aliveCount < eTarget && j < MAX_E) {
-      var colE = j % 12;
-      var rowE = (j / 12) | 0;
-      var ex = lane.x + ((colE + 0.5) / 12) * lane.w;
-      var ey = lane.y + lane.h * (0.16 + (rowE % 5) * 0.028);
-      var v = stage.enemyV;
-      var e = spawnEnemy(ex, ey, v);
-      if (!e) break;
-      e.born = frameId - 1;
+      var colE = j % marchCols;
+      var rowE = (j / marchCols) | 0;
+      var ey = lane.y + lane.h * (0.16 + (rowE % 8) * 0.04);
+      var e = spawnEnemy(colE, ey, stage.enemyV);
+      if (e < 0) break;
+      enemy.born[e] = frameId > 0 ? frameId - 1 : 0;
       j += 1;
     }
   }
@@ -1557,6 +1676,7 @@
       get stageName() { return stage ? stage.name : ''; },
       get friendlyAlive() { return friendly.aliveCount; },
       get enemyAlive() { return enemy.aliveCount; },
+      get enemyPeak() { return enemyPeak; },
       get enemyHp() { return enemyHp; },
       get playerHp() { return playerHp; },
       get cannonX() { return cannonX(); },
