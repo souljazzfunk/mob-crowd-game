@@ -3,7 +3,7 @@
 /* Emberline — cannon column. Raiders march down in a dense crowd. */
 
 (function () {
-  var BUILD = 'emberline-2';
+  var BUILD = 'emberline-3';
   var MAX_F = 640;
   var MAX_E = 960;
   var MAX_P = 480;
@@ -21,72 +21,72 @@
   var HIT_LIM = HIT_X2 * HIT_Y2;
   var TAU = Math.PI * 2;
   var SPENT = '\u2014';
-  var LABELS = ['', 'x2', 'x3', '+10', '+12', '+15', '+16', '+18', '-5', '-8', '-10', '-12'];
+  var LABELS = ['', 'x2', 'x3', '+10', '+12', '+15', '+16', '+18', '-5', '-6', '-8', '-10', '-12'];
 
   var STAGES = [
     {
       name: 'Kindling Yard',
-      enemyMax: 3200,
-      playerMax: 46,
-      fireEvery: 0.082,
-      friendlyV: 0.33,
-      enemyV: 0.08,
+      enemyMax: 1700,
+      playerMax: 48,
+      fireEvery: 0.058,
+      friendlyV: 0.46,
+      enemyV: 0.062,
       colsWant: 8,
-      openRows: 10,
-      gapFrac: 0.044,
-      topFrac: 0.115,
+      openRows: 12,
+      gapFrac: 0.038,
+      topFrac: 0.118,
       frontLimit: 0.40,
+      clashFrac: 0.56,
+      holeEvery: 0,
+      holeScale: 0,
       gates: [
-        { nx: 0.04, ny: 0.58, nw: 0.36, nh: 0.074, op: 'mul', v: 2, nvx: 0.042, rate: 28 },
-        { nx: 0.58, ny: 0.58, nw: 0.36, nh: 0.074, op: 'add', v: 10, nvx: -0.038 },
-        { nx: 0.06, ny: 0.40, nw: 0.32, nh: 0.074, op: 'mul', v: 2, nvx: 0.055, rate: 16 },
-        { nx: 0.52, ny: 0.40, nw: 0.40, nh: 0.074, op: 'sub', v: 5, nvx: -0.05 },
-        { nx: 0.20, ny: 0.23, nw: 0.52, nh: 0.074, op: 'add', v: 15, nvx: 0.032 }
+        { nx: 0.04, ny: 0.72, nw: 0.34, nh: 0.064, op: 'mul', v: 2, nvx: 0.048, rate: 50, lo: 0.02, hi: 0.14 },
+        { nx: 0.62, ny: 0.72, nw: 0.30, nh: 0.064, op: 'add', v: 10, nvx: -0.036, lo: 0.56, hi: 0.68 },
+        { nx: 0.36, ny: 0.58, nw: 0.26, nh: 0.058, op: 'sub', v: 5, nvx: 0.05, lo: 0.28, hi: 0.48 }
       ]
     },
     {
       name: 'Cinder Span',
-      enemyMax: 5200,
-      playerMax: 36,
-      fireEvery: 0.078,
-      friendlyV: 0.35,
-      enemyV: 0.095,
-      colsWant: 13,
-      openRows: 11,
-      gapFrac: 0.04,
-      topFrac: 0.11,
-      frontLimit: 0.42,
+      enemyMax: 3200,
+      playerMax: 30,
+      fireEvery: 0.062,
+      friendlyV: 0.48,
+      enemyV: 0.078,
+      colsWant: 8,
+      openRows: 12,
+      gapFrac: 0.036,
+      topFrac: 0.112,
+      frontLimit: 0.40,
+      clashFrac: 0.58,
+      holeEvery: 0,
+      holeScale: 0,
       gates: [
-        { nx: 0.03, ny: 0.60, nw: 0.30, nh: 0.07, op: 'mul', v: 2, nvx: 0.08, rate: 26 },
-        { nx: 0.38, ny: 0.60, nw: 0.26, nh: 0.07, op: 'sub', v: 8, nvx: -0.07 },
-        { nx: 0.68, ny: 0.60, nw: 0.28, nh: 0.07, op: 'add', v: 12, nvx: 0.06 },
-        { nx: 0.05, ny: 0.42, nw: 0.26, nh: 0.07, op: 'mul', v: 3, nvx: 0.09, rate: 18 },
-        { nx: 0.42, ny: 0.42, nw: 0.50, nh: 0.07, op: 'sub', v: 10, nvx: -0.08 },
-        { nx: 0.18, ny: 0.24, nw: 0.30, nh: 0.07, op: 'mul', v: 2, nvx: -0.07, rate: 20 },
-        { nx: 0.58, ny: 0.24, nw: 0.32, nh: 0.07, op: 'add', v: 18, nvx: 0.055 }
+        { nx: 0.05, ny: 0.74, nw: 0.30, nh: 0.06, op: 'mul', v: 3, nvx: 0.055, rate: 70, lo: 0.02, hi: 0.16 },
+        { nx: 0.58, ny: 0.74, nw: 0.28, nh: 0.06, op: 'sub', v: 8, nvx: -0.05, lo: 0.50, hi: 0.68 },
+        { nx: 0.34, ny: 0.60, nw: 0.28, nh: 0.056, op: 'add', v: 12, nvx: 0.04, lo: 0.22, hi: 0.42 },
+        { nx: 0.08, ny: 0.60, nw: 0.24, nh: 0.056, op: 'sub', v: 6, nvx: 0.045, lo: 0.02, hi: 0.18 }
       ]
     },
     {
       name: 'Crown Kiln',
-      enemyMax: 5600,
-      playerMax: 30,
-      fireEvery: 0.074,
-      friendlyV: 0.37,
-      enemyV: 0.11,
-      colsWant: 14,
+      enemyMax: 3600,
+      playerMax: 22,
+      fireEvery: 0.064,
+      friendlyV: 0.5,
+      enemyV: 0.084,
+      colsWant: 8,
       openRows: 12,
-      gapFrac: 0.038,
-      topFrac: 0.105,
-      frontLimit: 0.44,
+      gapFrac: 0.034,
+      topFrac: 0.108,
+      frontLimit: 0.42,
+      clashFrac: 0.60,
+      holeEvery: 0,
+      holeScale: 0,
       gates: [
-        { nx: 0.02, ny: 0.62, nw: 0.24, nh: 0.066, op: 'mul', v: 2, nvx: 0.11, rate: 30 },
-        { nx: 0.30, ny: 0.62, nw: 0.34, nh: 0.066, op: 'sub', v: 12, nvx: -0.09 },
-        { nx: 0.70, ny: 0.62, nw: 0.26, nh: 0.066, op: 'add', v: 16, nvx: 0.1 },
-        { nx: 0.04, ny: 0.46, nw: 0.22, nh: 0.066, op: 'mul', v: 3, nvx: -0.12, rate: 14 },
-        { nx: 0.34, ny: 0.46, nw: 0.30, nh: 0.066, op: 'sub', v: 8, nvx: 0.1 },
-        { nx: 0.70, ny: 0.46, nw: 0.26, nh: 0.066, op: 'mul', v: 2, nvx: 0.08, rate: 18 },
-        { nx: 0.12, ny: 0.28, nw: 0.30, nh: 0.066, op: 'sub', v: 10, nvx: 0.13 },
-        { nx: 0.50, ny: 0.28, nw: 0.28, nh: 0.066, op: 'mul', v: 2, nvx: -0.11, rate: 22 }
+        { nx: 0.08, ny: 0.76, nw: 0.28, nh: 0.056, op: 'mul', v: 3, nvx: -0.06, rate: 80, lo: 0.04, hi: 0.22 },
+        { nx: 0.52, ny: 0.76, nw: 0.30, nh: 0.056, op: 'sub', v: 10, nvx: 0.07, lo: 0.42, hi: 0.66 },
+        { nx: 0.30, ny: 0.62, nw: 0.24, nh: 0.052, op: 'sub', v: 8, nvx: -0.055, lo: 0.18, hi: 0.46 },
+        { nx: 0.62, ny: 0.62, nw: 0.26, nh: 0.052, op: 'add', v: 16, nvx: 0.04, lo: 0.52, hi: 0.70 }
       ]
     }
   ];
@@ -142,8 +142,10 @@
   var simTime = 0;
   var fireCd = 0;
   var waveCd = 0;
+  var waveRows = 0;
   var waveSerial = 0;
   var spawnSerial = 0;
+  var laneSerial = 0;
   var cannonNX = 0.5;
   var targetNX = 0.5;
   var hintT = 0;
@@ -224,6 +226,7 @@
       gates: new Uint32Array(n),
       born: new Uint32Array(n),
       slot: new Uint16Array(n),
+      stream: new Float32Array(n),
       color: new Uint8Array(n),
       kind: new Uint8Array(n),
       text: new Uint8Array(n),
@@ -247,7 +250,7 @@
       gx: 0, gy: 0, gw: 10, gh: 10,
       op: 'mul', v: 2, rate: 0, tokens: 0, tokenMax: 0,
       left: 0, active: false, bit: 1, flash: 0, flashCd: 0,
-      label: 'x2', labelId: 1
+      label: 'x2', labelId: 1, lo: 0.015, hi: 0.8
     };
   }
 
@@ -432,6 +435,24 @@
     return lane.x + 14 + (slot + 0.5) * spacing;
   }
 
+  function pierceX(index) {
+    var cols = marchCols > 0 ? marchCols : 8;
+    var gaps = cols > 1 ? cols - 1 : 1;
+    var i = index % gaps;
+    return (marchX(i) + marchX(i + 1)) * 0.5;
+  }
+
+  function laneSlot(gated) {
+    var cols = marchCols > 0 ? marchCols : 8;
+    if (!gated) return (cols / 2) | 0;
+    var n = laneSerial;
+    laneSerial += 1;
+    var col = (n >> 1) % cols;
+    if ((n & 1) === 0) return col;
+    var gaps = cols > 1 ? cols - 1 : 1;
+    return 100 + (col % gaps);
+  }
+
   function showScreen(name) {
     phase = name;
     var any = false;
@@ -467,6 +488,11 @@
       g.bit = 1 << i;
       g.flash = 0;
       g.flashCd = 0;
+      g.lo = src.lo != null ? src.lo : 0.015;
+      g.hi = src.hi != null ? src.hi : 0.985 - src.nw;
+      if (g.hi < g.lo) g.hi = g.lo;
+      if (g.nx < g.lo) g.nx = g.lo;
+      if (g.nx > g.hi) g.nx = g.hi;
       g.labelId = labelId(src.op, src.v);
       g.label = LABELS[g.labelId] || (src.op === 'mul' ? 'x' + src.v : src.op === 'add' ? '+' + src.v : '-' + src.v);
     }
@@ -487,11 +513,11 @@
     for (var i = 0; i < gateCount; i++) {
       var g = gates[i];
       g.nx += g.nvx * dt;
-      if (g.nx < 0.015) {
-        g.nx = 0.015;
+      if (g.nx < g.lo) {
+        g.nx = g.lo;
         g.nvx = Math.abs(g.nvx);
-      } else if (g.nx + g.nw > 0.985) {
-        g.nx = 0.985 - g.nw;
+      } else if (g.nx > g.hi) {
+        g.nx = g.hi;
         g.nvx = -Math.abs(g.nvx);
       }
       if (g.op === 'mul') {
@@ -521,8 +547,10 @@
     simTime = 0;
     fireCd = 0.12;
     waveCd = 0.4;
+    waveRows = 0;
     waveSerial = 0;
     spawnSerial = 0;
+    laneSerial = 0;
     cannonNX = 0.5;
     targetNX = 0.5;
     hintT = index === 0 ? 2.2 : 1.1;
@@ -598,10 +626,13 @@
     if (x < minX) x = minX;
     else if (x > maxX) x = maxX;
     if (y < lane.y + 4) y = lane.y + 4;
+    var slot = laneSlot(!!gatesHit);
     friendly.x[i] = x;
     friendly.y[i] = y;
     friendly.py[i] = y;
-    friendly.vx[i] = ((spawnSerial % 5) - 2) * 4;
+    friendly.stream[i] = x;
+    friendly.slot[i] = slot;
+    friendly.vx[i] = 0;
     friendly.r[i] = 4.6;
     friendly.gates[i] = gatesHit || 0;
     friendly.born[i] = frameId;
@@ -634,7 +665,7 @@
 
   function spawnOpening() {
     var gap = lane.h * stage.gapFrac;
-    if (gap < 28) gap = 28;
+    if (gap < 24) gap = 24;
     var top = lane.y + lane.h * stage.topFrac;
     var limit = lane.y + lane.h * stage.frontLimit;
     var y = top;
@@ -721,6 +752,7 @@
   function applyMul(i, g) {
     var hit = friendly.gates[i] | g.bit;
     friendly.gates[i] = hit;
+    friendly.slot[i] = laneSlot(true);
     var need = g.v - 1;
     if (need > 0 && g.tokens >= 1) {
       var can = g.tokens < need ? (g.tokens | 0) : need;
@@ -902,10 +934,14 @@
     waveCd -= dt;
     if (waveCd > 0) return;
     var gap = lane.h * stage.gapFrac;
-    if (gap < 28) gap = 28;
+    if (gap < 24) gap = 24;
     var speed = stage.enemyV * lane.h;
     if (speed < 1) speed = 1;
     var every = gap / speed;
+    waveRows += 1;
+    if (stage.holeEvery && waveRows % stage.holeEvery === 0) {
+      every *= 1 + (stage.holeScale || 2);
+    }
     waveCd += every;
     if (waveCd < 0) waveCd = 0;
     spawnRow(lane.y + lane.h * stage.topFrac);
@@ -929,9 +965,16 @@
       var i = order[k];
       if (!alive[i] || dying[i] || born[i] === frameId) continue;
       pys[i] = ys[i];
-      xs[i] += vxs[i] * dt;
       ys[i] -= speed * dt;
-      vxs[i] *= 0.985;
+      var ny = (ys[i] - lane.y) / lane.h;
+      var fan;
+      if (ny > 0.71) fan = 0;
+      else if (ny < 0.64) fan = 1;
+      else fan = (0.71 - ny) / (0.71 - 0.64);
+      var slot = friendly.slot[i];
+      var target = slot >= 100 ? pierceX(slot - 100) : marchX(slot);
+      var aimX = friendly.stream[i] + (target - friendly.stream[i]) * fan;
+      xs[i] = aimX;
       if (xs[i] < minX) xs[i] = minX;
       else if (xs[i] > maxX) xs[i] = maxX;
       applyGates(i);
@@ -994,9 +1037,11 @@
     var ey = enemy.y;
     var eAlive = enemy.alive;
     var eDying = enemy.dying;
+    var clashY = lane.y + lane.h * (stage.clashFrac || 0.56);
     for (var ei = 0; ei < nE; ei++) {
       var id = eOrder[ei];
       if (!eAlive[id] || eDying[id]) continue;
+      if (ey[id] < clashY) continue;
       var cx = (ex[id] - x0) / cw;
       var cy = (ey[id] - y0) / ch;
       if (cx < 0) cx = 0;
